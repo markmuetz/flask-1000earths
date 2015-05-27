@@ -3,6 +3,7 @@
 import os
 import shutil
 import ConfigParser
+import datetime as dt
 
 import generate_templates
 from commandify import command, main_command, commandify
@@ -50,7 +51,32 @@ def new_dir(dir_path, dir_title, path, title, order, content=None):
 
 
 @command
-def rm(path, is_dir=False):
+def new_post(path, title, published=False, content=None):
+    fmt = '%d/%M/%Y %H:%m:%S'
+    os.chdir('site/posts')
+
+    cp = ConfigParser.ConfigParser()
+    cp.add_section('page')
+    cp.set('page', 'type', 'blog_post')
+    cp.set('page', 'title', title)
+    cp.set('page', 'date', dt.datetime.strftime(dt.datetime.now(), fmt))
+    cp.set('page', 'published', published)
+    with open(path + '.cfg', 'w') as f:
+        cp.write(f)
+
+    with open(path + '.md', 'w') as f:
+        if content:
+            f.write(content)
+        else:
+            f.write('# {0}'.format(title))
+
+    os.chdir('../..')
+
+    generate_templates.main()
+
+
+@command
+def rm(path):
     cmd = raw_input('Are you sure you want to remove {0} [y/n]: '.format(path))
     if cmd == 'y':
         os.chdir('site')
@@ -61,6 +87,21 @@ def rm(path, is_dir=False):
         if os.path.exists(path + '.cfg'):
             os.remove(path + '.cfg')
         os.chdir('..')
+        generate_templates.main()
+
+
+@command
+def rm_post(path):
+    cmd = raw_input('Are you sure you want to remove {0} [y/n]: '.format(path))
+    if cmd == 'y':
+        os.chdir('site/posts')
+        if os.path.exists(path + '.md'):
+            os.remove(path + '.md')
+        if os.path.exists(path + '.html'):
+            os.remove(path + '.html')
+        if os.path.exists(path + '.cfg'):
+            os.remove(path + '.cfg')
+        os.chdir('../..')
         generate_templates.main()
 
 

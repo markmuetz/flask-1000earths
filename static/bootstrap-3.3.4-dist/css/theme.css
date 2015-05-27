@@ -16,3 +16,8 @@ body {
 .theme-showcase .navbar .container {
   width: auto;
 }
+
+textarea.code-text {
+  font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
+  font-size: 12px;
+}

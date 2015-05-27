@@ -1,21 +1,22 @@
 {% extends "layout.html" %}
 
 {% block head %}
-      <title>1000 Earths</title>
+<title>1000 Earths</title>
 {% endblock %}
 
 {% block body %}
 <div class="container theme-showcase" role="main">
 <form action='/{{ post_url }}' method='POST'>
 URL:<br>
-<input type="text" name="path" value="{{ url }}"/>
+<input type="text" name="path" value="{{ url }}" readonly="True"/>
 <input type="hidden" name="old_path" value="{{ url }}"/>
-<input type="hidden" name="markup" value="md"/>
+<input type="hidden" name="markup" value="html"/>
 <br>
-Text (Markdown):<br>
-<textarea class="code-text" name="md_text" cols="100" rows="30">{{ md_text }}</textarea>
+Text (HTML):<br>
+<textarea class="code-text" name="html_text" cols="100" rows="30">{{ html_text }}</textarea>
 <input type="submit" value="Submit"/>
 </form> 
 </div>
 {% endblock %}
+
 

@@ -11,6 +11,7 @@ app = Flask(__name__)
 
 PASSWORD = 'bob'
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -60,6 +61,7 @@ def home():
 def blog():
     with open('json/posts.json', 'r') as f:
         posts = simplejson.load(f)
+    print(posts)
     return render_nav_template('blog.html', page='blog', posts=posts)
 
 
@@ -74,6 +76,13 @@ def dispatch(path):
             filename = 'site/{0}.md'.format(path)
             md_text = open(filename, 'r').read()
             return render_nav_template('edit_page.html', post_url=path, url=path, md_text=md_text)
+        elif request.args.get('edit_html', False):
+            if not session['logged_in']:
+                return render_nav_template('auth_error.html')
+            filename = 'site/{0}.html'.format(path)
+            html_text = open(filename, 'r').read()
+            return render_nav_template('edit_html_page.html', post_url=path, url=path,
+                                       html_text=html_text)
         elif request.args.get('delete', False):
             if not session['logged_in']:
                 return render_nav_template('auth_error.html')
@@ -95,16 +104,23 @@ def dispatch(path):
         new_path = request.form['path']
         old_path = request.form['old_path']
         assert old_path == path, '{0} not equal to {1}'.format(old_path, path)
-        md_text = request.form['md_text']
         filename = 'site/{0}'.format(new_path)
-        if new_path != old_path and os.new_path.exists(filename + '.md'):
-            raise Exception('Page {0} already exists'.format(new_path))
+        if request.form['markup'] == 'md':
+            md_text = request.form['md_text']
+            if new_path != old_path and os.new_path.exists(filename + '.md'):
+                raise Exception('Page {0} already exists'.format(new_path))
 
-        # Overwrite:
-        with open(filename + '.md', 'w') as f:
-            f.write(md_text)
-        markdown.markdownFromFile(input=filename + '.md', output=filename + '.html')
-        shutil.copyfile(filename + '.html', os.path.join('templates', filename + '.html'))
+            # Overwrite:
+            with open(filename + '.md', 'w') as f:
+                f.write(md_text)
+            markdown.markdownFromFile(input=filename + '.md', output=filename + '.html')
+            shutil.copyfile(filename + '.html', os.path.join('templates', filename + '.html'))
+        elif request.form['markup'] == 'html':
+            html_text = request.form['html_text']
+            # Overwrite:
+            with open(filename + '.html', 'w') as f:
+                f.write(html_text)
+            shutil.copyfile(filename + '.html', os.path.join('templates', filename + '.html'))
         return redirect(new_path)
 
 
@@ -123,47 +139,7 @@ def render_nav_template(template, **kwargs):
     pages = get_pages()
     return render_template(template, nav_pages=pages, **kwargs)
 
-# @app.route('/blog/', methods=['GET', 'POST'])
-# def blog():
-#     if request.method == 'POST':
-#         print('POST')
-#         title = request.form['title']
-#         md_text = request.form['md_text']
-#         filename = 'templates/posts/{0}'.format(title)
-#         if os.path.exists(filename + '.md'):
-#             raise Exception('Post {0} already exists'.format(title))
-#         with open(filename + '.md', 'w') as f:
-#             f.write(md_text)
-#         markdown.markdownFromFile(input=filename + '.md', output=filename + '.html')
-#         return redirect('/blog/')
-# 
-#     # if request.method == 'GET':
-#     post_htmls = glob('templates/posts/*.html')
-#     posts = [os.path.splitext(os.path.split(p)[-1])[0] for p in post_htmls]
-#     print(posts)
-#     return render_template('blog.html', page='blog', posts=posts)
-# 
-# 
-# 
-# @app.route('/blog/new')
-# def new_blog_post():
-#     return render_template('new_blog_post.html', page='blog')
-# 
-# @app.route('/blog/<post>')
-# def blog_post(post):
-#     if request.args.get('edit', False):
-#         filename = 'templates/posts/{0}.md'.format(post)
-#         md_text = open(filename, 'r').read()
-#         return render_template('edit_blog_post.html', page='blog', post=post, md_text=md_text)
-#     else:
-#         return render_template('blog_post.html', page='blog', post=post)
-# 
-# 
-# @app.route('/projects/')
-# def projects():
-#     return render_template('index.html', page='projects')
-# 
-# 
+
 @app.errorhandler(404)
 def page_not_found(error):
         return render_template('404.html'), 404
