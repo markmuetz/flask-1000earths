@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block head %}
+      <title>1000 Earths: Edit</title>
+{% endblock %}
+
+{% block body %}
+    <div class="container theme-showcase" role="main">
+ <form action='/blog/' method='POST'>
+title:<br>
+<input type="text" name="title">
+<br>
+md:<br>
+<textarea name="md_text" cols="100" rows="40"></textarea>
+<input type="submit" value="Submit">
+</form> 
+      </div>
+{% endblock %}
+
+
+
