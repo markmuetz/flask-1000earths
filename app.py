@@ -1,8 +1,11 @@
 import os
 import shutil
 from glob import glob
-from flask import Flask, render_template, session, request, jsonify, redirect
+import ConfigParser
+
+import simplejson
 import markdown
+from flask import Flask, render_template, session, request, jsonify, redirect
 
 app = Flask(__name__)
 
@@ -42,21 +45,22 @@ def new_page():
         print('POST')
         path = request.form['path']
         md_text = request.form['md_text']
-        filename = 'site/{0}'.format(path)
-        if os.path.exists(filename + '.md'):
-            raise Exception('Page {0} already exists'.format(path))
 
-        # Create:
-        with open(filename + '.md', 'w') as f:
-            f.write(md_text)
-        markdown.markdownFromFile(input=filename + '.md', output=filename + '.html')
-        shutil.copyfile(filename + '.html', os.path.join('templates', filename + '.html'))
+        # markdown.markdownFromFile(input=filename + '.md', output=filename + '.html')
+        # shutil.copyfile(filename + '.html', os.path.join('templates', filename + '.html'))
         return redirect(path)
 
 
 @app.route('/')
 def home():
     return render_nav_template('index.html', page='home')
+
+
+@app.route('/blog')
+def blog():
+    with open('json/posts.json', 'r') as f:
+        posts = simplejson.load(f)
+    return render_nav_template('blog.html', page='blog', posts=posts)
 
 
 @app.route('/<path:path>', methods=['GET', 'POST'])
@@ -73,10 +77,11 @@ def dispatch(path):
         elif request.args.get('delete', False):
             if not session['logged_in']:
                 return render_nav_template('auth_error.html')
+            cfg_filename = 'site/{0}.cfg'.format(path)
             md_filename = 'site/{0}.md'.format(path)
             html_filename = 'site/{0}.html'.format(path)
             template_html_filename = 'templates/site/{0}.html'.format(path)
-            for filename in [md_filename, html_filename, template_html_filename]:
+            for filename in [cfg_filename, md_filename, html_filename, template_html_filename]:
                 os.remove(filename)
 
             return redirect('/admin')
@@ -104,17 +109,12 @@ def dispatch(path):
 
 
 def get_pages(page_type='all'):
-    filenames = glob('templates/site/*.html')
-    print(filenames)
-    pages = []
+    with open('json/pages.json', 'r') as f:
+        pages = simplejson.load(f)
     if page_type != 'editable':
-        pages.append({'url': '', 'title': 'Home'})
-    for filename in filenames:
-        url = os.path.splitext(os.path.relpath(filename, 'templates/site'))[0]
-        title = ' '.join(url.split('-')).capitalize()
-        pages.append({'url': url, 'title': title})
-    if page_type != 'editable' and session['logged_in']:
-        pages.append({'url': 'admin', 'title': 'Admin'})
+        pages.insert(0, {'url': '', 'title': 'Home'})
+        if session['logged_in']:
+            pages.append({'url': 'admin', 'title': 'Admin'})
     print(pages)
     return pages
 
