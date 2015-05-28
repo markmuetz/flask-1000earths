@@ -2,14 +2,24 @@ import os
 import shutil
 from glob import glob
 import ConfigParser
+import datetime as dt
 
 import simplejson
 import markdown
 from flask import Flask, render_template, session, request, jsonify, redirect
 
+from generate_templates import *
+
 app = Flask(__name__)
 
 PASSWORD = 'bob'
+
+
+def _logged_in(session):
+    if 'logged_in' in session:
+        if session['logged_in']:
+            return True
+    return False
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -29,7 +39,7 @@ def logout():
 
 @app.route('/admin')
 def admin():
-    if not session['logged_in']:
+    if not _logged_in(session):
         return render_nav_template('auth_error.html')
     pages = get_pages('editable')
     return render_nav_template('admin.html', pages=pages)
@@ -37,18 +47,16 @@ def admin():
 
 @app.route('/new-page', methods=['GET', 'POST'])
 def new_page():
-    if not session['logged_in']:
+    if not _logged_in(session):
         return render_nav_template('auth_error.html')
 
     if request.method == 'GET':
-        return render_nav_template('edit_page.html', post_url='new-page', url='', md_text='')
+        return render_nav_template('edit_page.html', post_path='new-page', md_text='')
     elif request.method == 'POST':
         print('POST')
         path = request.form['path']
         md_text = request.form['md_text']
 
-        # markdown.markdownFromFile(input=filename + '.md', output=filename + '.html')
-        # shutil.copyfile(filename + '.html', os.path.join('templates', filename + '.html'))
         return redirect(path)
 
 
@@ -65,84 +73,96 @@ def blog():
     return render_nav_template('blog.html', page='blog', posts=posts)
 
 
-@app.route('/<path:path>', methods=['GET', 'POST'])
-def dispatch(path):
-    print(path)
-    print(request.method)
+@app.route('/<path:page_name>', methods=['GET', 'POST'])
+def page(page_name):
+    print(page_name)
+    is_blog_post = os.path.split(page_name)[0] == 'posts'
+
+    if is_blog_post:
+        page = read_post(page_name)
+    else:
+        page = read_page(page_name)
+
     if request.method == 'GET':
-        if request.args.get('edit', False):
-            if not session['logged_in']:
+        markup = request.args.get('edit', False)
+        if markup in ['html', 'md']:
+            if not _logged_in(session):
                 return render_nav_template('auth_error.html')
-            filename = 'site/{0}.md'.format(path)
-            md_text = open(filename, 'r').read()
-            return render_nav_template('edit_page.html', post_url=path, url=path, md_text=md_text)
-        elif request.args.get('edit_html', False):
-            if not session['logged_in']:
+            text = page[markup]
+            return render_nav_template('edit_page.html', page_type='post',
+                                       page=page, text=text, markup=markup, post_path=page_name)
+
+        if is_blog_post:
+            return render_nav_template('blog_post.html', post=page)
+        else:
+            return render_nav_template('page.html', page=page)
+
+    elif request.method == 'POST':
+        if not _logged_in(session):
+            return render_nav_template('auth_error.html')
+
+        if request.args.get('delete', False):
+            if not _logged_in(session):
                 return render_nav_template('auth_error.html')
-            filename = 'site/{0}.html'.format(path)
-            html_text = open(filename, 'r').read()
-            return render_nav_template('edit_html_page.html', post_url=path, url=path,
-                                       html_text=html_text)
-        elif request.args.get('delete', False):
-            if not session['logged_in']:
-                return render_nav_template('auth_error.html')
-            cfg_filename = 'site/{0}.cfg'.format(path)
-            md_filename = 'site/{0}.md'.format(path)
-            html_filename = 'site/{0}.html'.format(path)
-            template_html_filename = 'templates/site/{0}.html'.format(path)
-            for filename in [cfg_filename, md_filename, html_filename, template_html_filename]:
-                os.remove(filename)
+
+            delete_page(page_name)
 
             return redirect('/admin')
 
-        return render_nav_template('page.html', url=path)
-    elif request.method == 'POST':
-        if not session['logged_in']:
-            return render_nav_template('auth_error.html')
+        new_name = request.form['name']
+        old_name = request.form['old_name']
+        if new_name != old_name:
+            page['new_name'] = new_name
 
-        print('POST')
-        new_path = request.form['path']
-        old_path = request.form['old_path']
-        assert old_path == path, '{0} not equal to {1}'.format(old_path, path)
-        filename = 'site/{0}'.format(new_path)
         if request.form['markup'] == 'md':
-            md_text = request.form['md_text']
-            if new_path != old_path and os.new_path.exists(filename + '.md'):
-                raise Exception('Page {0} already exists'.format(new_path))
+            page['md'] = request.form['text']
 
-            # Overwrite:
-            with open(filename + '.md', 'w') as f:
-                f.write(md_text)
-            markdown.markdownFromFile(input=filename + '.md', output=filename + '.html')
-            shutil.copyfile(filename + '.html', os.path.join('templates', filename + '.html'))
         elif request.form['markup'] == 'html':
-            html_text = request.form['html_text']
-            # Overwrite:
-            with open(filename + '.html', 'w') as f:
-                f.write(html_text)
-            shutil.copyfile(filename + '.html', os.path.join('templates', filename + '.html'))
-        return redirect(new_path)
+            page['html'] = request.form['text']
+            page['html_edited'] = is_blog_post
+
+        page['name'] = page_name
+        if is_blog_post:
+            save_post(page)
+        else:
+            save_page(page)
+
+        return redirect(request.path)
+
+
+@app.template_filter('datefmt')
+def _jinja2_filter_datetime(date):
+    # date = dateutil.parser.parse(date)
+    fmt = '%d/%m/%Y %H:%M:%S'
+    date = dt.datetime.strptime(date, fmt)
+    native = date.replace(tzinfo=None)
+    out_fmt = '%b %d, %Y'
+    return native.strftime(out_fmt) 
 
 
 def get_pages(page_type='all'):
     with open('json/pages.json', 'r') as f:
         pages = simplejson.load(f)
     if page_type != 'editable':
-        pages.insert(0, {'url': '', 'title': 'Home'})
-        if session['logged_in']:
-            pages.append({'url': 'admin', 'title': 'Admin'})
+        pages.insert(0, {'path': '/', 'title': 'Home'})
+        if _logged_in(session):
+            pages.append({'path': '/admin', 'title': 'Admin'})
     print(pages)
     return pages
 
 
 def render_nav_template(template, **kwargs):
     pages = get_pages()
-    return render_template(template, nav_pages=pages, **kwargs)
+    for page in pages:
+        print(page['path'])
+    print(request.path)
+    
+    return render_template(template, path=request.path, nav_pages=pages, **kwargs)
 
 
 @app.errorhandler(404)
 def page_not_found(error):
-        return render_template('404.html'), 404
+    return render_template('404.html'), 404
 
 
 if __name__ == '__main__':

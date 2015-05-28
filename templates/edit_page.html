@@ -6,16 +6,24 @@
 
 {% block body %}
 <div class="container theme-showcase" role="main">
-<form action='/{{ post_url }}' method='POST'>
+<form action='/{{ post_path }}' method='POST'>
 URL:<br>
-<input type="text" name="path" value="{{ url }}"/>
-<input type="hidden" name="old_path" value="{{ url }}"/>
-<input type="hidden" name="markup" value="md"/>
+<input type="text" name="name" value="{{ page.name }}"/>
+<input type="hidden" name="old_name" value="{{ page.name }}"/>
+<input type="hidden" name="markup" value="{{ markup }}"/>
 <br>
+
+{% if markup == 'md' %}
 Text (Markdown):<br>
-<textarea class="code-text" name="md_text" cols="100" rows="30">{{ md_text }}</textarea>
+{% else %}
+Text (HTML):<br>
+{% endif %}
+<textarea class="code-text" name="text" cols="100" rows="30">{{ text }}</textarea>
+
 <input type="submit" value="Submit"/>
+
 </form> 
 </div>
 {% endblock %}
+
 

@@ -52,7 +52,7 @@ def new_dir(dir_path, dir_title, path, title, order, content=None):
 
 @command
 def new_post(path, title, published=False, content=None):
-    fmt = '%d/%M/%Y %H:%m:%S'
+    fmt = '%d/%m/%Y %H:%M:%S'
     os.chdir('site/posts')
 
     cp = ConfigParser.ConfigParser()

@@ -1,23 +1,25 @@
 {% extends "layout.html" %}
 
 {% block head %}
-      <title>1000 Earths</title>
+<title>{{ page.title }}</title>
 {% endblock %}
 
 {% block body %}
-    <div class="container theme-showcase" role="main">
-
-        {% if session.logged_in %}
-        <a href="?edit=True">Edit</a></li>
-        <a href="?edit_html=True">Edit HTML</a></li>
-        {% endif %}
+    <div class="container theme-showcase page-content" role="main">
 
       <div class="page-header">
-          <h1>{{ page_title }}</h1>
+          <span>
+          <h1 class="page-title">{{ page.title }}</h1>
+            {% if session.logged_in %}
+            <a href="?edit=md">Edit</a></li>
+            <a href="?edit=html">Edit HTML</a></li>
+            {% endif %}
+        </span>
       </div>
-      <div class="well">
-          {% set path = 'site/' + url + '.html' %}{% include path %}
+      <div class="content">
+          {{ page.html|safe }}
       </div>
+  </div>
 {% endblock %}
 
 

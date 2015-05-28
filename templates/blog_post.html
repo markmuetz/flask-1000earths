@@ -1,24 +1,27 @@
 {% extends "layout.html" %}
 
 {% block head %}
-      <title>1000 Earths</title>
+<title>{{ post.title }}</title>
 {% endblock %}
 
 {% block body %}
-    {% if session.logged_in %}
-    
-    <a href="?edit=True">Edit</a></li>
-
-    {% endif %}
-
-    <div class="container theme-showcase" role="main">
+    <div class="container theme-showcase blog-post-content" role="main">
 
       <div class="page-header">
-        <h1>Post</h1>
+          <span>
+          <h1 class="blog-title">{{ post.title }}</h1>
+            {% if session.logged_in %}
+            <span title="{{ post.date }}" class="blog-date">{{ post.date|datefmt }}</span>
+            <a href="?edit=md">Edit Markdown</a>
+            <span style="margin-left: 10px"/>
+            <a href="?edit=html">Edit HTML</a>
+            {% endif %}
+        </span>
       </div>
-      <div class="well">
-          {% set path = 'posts/' + post + '.html' %}{% include path %}
+      <div class="content">
+          {{ post.html|safe }}
       </div>
+  </div>
 {% endblock %}
 
 

@@ -8,9 +8,12 @@
 
         {% block head %}{% endblock %}
 
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/default.min.css">
+        <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+
         <!-- Bootstrap -->
         <link href="/static/bootstrap-3.3.4-dist/css/bootstrap.min.css" rel="stylesheet">
-
+        <link href='http://fonts.googleapis.com/css?family=Roboto:400,900,700' rel='stylesheet' type='text/css'>
         <!-- Theme -->
         <link href="/static/bootstrap-3.3.4-dist/css/bootstrap-theme.min.css" rel="stylesheet">
         <link href="/static/bootstrap-3.3.4-dist/css/theme.css" rel="stylesheet">
@@ -27,6 +30,7 @@
         <script type="text/javascript">
         var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
         </script>
+        <script>hljs.initHighlightingOnLoad();</script>
     </head>
     <body>
         <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -48,12 +52,12 @@
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{page.title}}<span class="caret"></span></a>
                   <ul class="dropdown-menu" role="menu">
                 {% for subpage in page.subpages %} 
-                    <li {% if url == subpage.url %}class="active"{% endif %}><a href='/{{ subpage.url }}'>{{ subpage.title }}</a></li>
+                    <li {% if path == subpage.path %}class="active"{% endif %}><a href='{{ subpage.path }}'>{{ subpage.title }}</a></li>
                 {% endfor %}
                   </ul>
                   </li>
                 {% else %}
-                <li {% if url == page.url %}class="active"{% endif %}><a href='/{{ page.url }}'>{{ page.title }}</a></li>
+                <li {% if path == page.path %}class="active"{% endif %}><a href='{{ page.path }}'>{{ page.title }}</a></li>
                 {% endif %}
                 {% endfor %}
               </ul>
