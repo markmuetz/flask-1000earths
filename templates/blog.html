@@ -13,7 +13,7 @@
             <li class="blog-post">
             <span title="{{ post.date }}" class="blog-date">{{ post.date|datefmt }}</span>
             <a class="blog-link" href='{{ post.path }}'>{{ post.title }}</a>{% if not post.published %} (unpublished){% endif %}
-            <p class="blog-subject">Some subject about something interesting to entice people in and get them to click on the blog link above. Should be reasonably short and to the point, maybe one or two sentences.</p >
+            <p class="blog-summary">{{ post.summary }}</p >
             </li>
             {% endif %}
             {% endfor %}

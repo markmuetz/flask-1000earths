@@ -9,9 +9,9 @@ import persistence as p
 class Page(p.Model):
     title = p.Field(str)
     order = p.Field(int)
-    html_edited = p.Field(bool)
-    html = p.ContentField('html')
-    md = p.ContentField('md')
+    html_edited = p.Field(bool, default=False)
+    html = p.ContentField('html', default='')
+    md = p.ContentField('md', default='')
 
     def save(self):
         if not self.html_edited:
@@ -29,11 +29,12 @@ class Page(p.Model):
 
 class Post(p.Model):
     title = p.Field(str)
-    date = p.Field(dt.datetime)
-    published = p.Field(bool)
-    html_edited = p.Field(bool)
-    html = p.ContentField('html')
-    md = p.ContentField('md')
+    summary = p.Field(str)
+    date = p.Field(dt.datetime, default=dt.datetime.now())
+    published = p.Field(bool, default=False)
+    html_edited = p.Field(bool, default=False)
+    html = p.ContentField('html', default='')
+    md = p.ContentField('md', default='')
 
     def save(self):
         if not self.html_edited:
@@ -107,7 +108,7 @@ def update_posts():
                            'title': post.title,
                            'published': post.published,
                            'date': date,
+                           'summary': post.summary,
                            'path': '/' + post.path})
     with open('json/posts.json', 'w') as f:
         simplejson.dump(json_posts, f)
-

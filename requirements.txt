@@ -1,3 +1,4 @@
+argcomplete==0.8.8
 -e git+https://github.com/markmuetz/commandify.git@8b5c26e012c5dfddfdbea930474e940ecfbdeb49#egg=commandify-master
 Flask==0.10.1
 gitdb==0.6.4
