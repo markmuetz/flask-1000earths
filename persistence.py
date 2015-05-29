@@ -1,11 +1,36 @@
 import os
+import shutil
 import datetime as dt
 from glob import glob
 import ConfigParser
 
-from settings import SITE
+from settings import SITE, CACHE
 
 DATE_FMT = '%Y-%m-%d %H:%M:%S'
+
+class Cache(object):
+    def contains(self, path):
+        path = path[1:]
+        if os.path.exists(os.path.join(CACHE, path)):
+            return True
+        return False
+
+    def get(self, path):
+        path = path[1:]
+        with open(os.path.join(CACHE, path), 'r') as f:
+            return f.read();
+
+    def set(self, path, html):
+        path = path[1:]
+        if not os.path.exists(os.path.join(CACHE, os.path.dirname(path))):
+            os.makedirs(os.path.join(CACHE, os.path.dirname(path)))
+        with open(os.path.join(CACHE, path), 'w') as f:
+            return f.write(html);
+
+    def clear(self):
+        if os.path.exists(CACHE):
+            shutil.rmtree(CACHE)
+
 
 class Objects(object):
     obj_cls = None
@@ -170,8 +195,6 @@ class ContentField(object):
         if default is not None and type(default) != str:
             raise Exception('Default not of right type')
         self.default = default
-
-
 
 class DirField(object):
     def __init__(self, required=True):

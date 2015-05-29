@@ -3,3 +3,5 @@
 .env/
 templates/site/
 site/
+cache/
+secret_settings.py

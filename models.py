@@ -4,7 +4,7 @@ import simplejson
 import markdown
 
 import persistence as p
-from settings import SITE, USE_GIT
+from settings import SITE, USE_GIT, CACHE
 
 
 class Page(p.Model):
@@ -106,6 +106,9 @@ def update_site(message=''):
             repo.git.add('-A')
             repo.git.commit(m=message)
 
+    cache = p.Cache()
+    cache.clear()
+
 
 def update_posts(message=''):
     posts = Post.objects.all(order_by='date')
@@ -127,3 +130,6 @@ def update_posts(message=''):
         if repo.git.status('--porcelain') != '':
             repo.git.add('-A')
             repo.git.commit(m=message)
+
+    cache = p.Cache()
+    cache.clear()

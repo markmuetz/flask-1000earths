@@ -10,10 +10,11 @@ from flask import Flask, render_template, session, request, jsonify, redirect
 
 from models import Page, Post, Dir
 import persistence
+from secret_settings import PASSWORD, SECRET_KEY
 
 app = Flask(__name__)
 
-PASSWORD = 'bob'
+cache = persistence.Cache()
 
 
 def _logged_in(session):
@@ -62,11 +63,16 @@ def new_page():
 
 @app.route('/')
 def home():
+    if not _logged_in(session) and cache.contains('/home'):
+        return cache.get('/home')
     return render_nav_template('index.html', page='home')
 
 
 @app.route('/blog')
 def blog():
+    if not _logged_in(session) and cache.contains('/blog-page'):
+        return cache.get('/blog-page')
+
     with open('json/posts.json', 'r') as f:
         posts = simplejson.load(f)
     return render_nav_template('blog.html', page='blog', posts=posts)
@@ -74,6 +80,9 @@ def blog():
 
 @app.route('/<path:path>', methods=['GET', 'POST'])
 def page(path):
+    if not _logged_in(session) and cache.contains(request.path):
+        return cache.get(request.path)
+
     is_blog_post = os.path.split(path)[0] == 'blog'
 
     if is_blog_post:
@@ -149,7 +158,16 @@ def get_pages(page_type='all'):
 
 def render_nav_template(template, **kwargs):
     pages = get_pages()
-    return render_template(template, path=request.path, nav_pages=pages, **kwargs)
+    html = render_template(template, path=request.path, nav_pages=pages, **kwargs)
+    if not _logged_in(session):
+        if request.path == '/':
+            path = '/home'
+        elif request.path == '/blog':
+            path = '/blog-page'
+        else:
+            path = request.path
+        cache.set(path, html)
+    return html
 
 
 @app.errorhandler(404)
@@ -158,7 +176,7 @@ def page_not_found(error):
 
 
 if __name__ == '__main__':
-    app.config['SECRET_KEY'] = 'no-one will guess this!!!!'
+    app.config['SECRET_KEY'] = SECRET_KEY
 
     app.debug = True
     app.run(host='0.0.0.0')
