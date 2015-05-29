@@ -4,6 +4,7 @@ import simplejson
 import markdown
 
 import persistence as p
+from settings import SITE, USE_GIT
 
 
 class Page(p.Model):
@@ -17,11 +18,11 @@ class Page(p.Model):
         if not self.html_edited:
             self.html = markdown.markdown(self.md)
         super(Page, self).save()
-        update_site()
+        update_site('save page:{0}'.format(self.path))
 
     def delete(self):
         super(Page, self).delete()
-        update_site()
+        update_site('delete page:{0}'.format(self.path))
 
     def __repr__(self):
         return '<{0}: {1}>'.format(type(self).__name__, self.path)
@@ -40,11 +41,11 @@ class Post(p.Model):
         if not self.html_edited:
             self.html = markdown.markdown(self.md)
         super(Post, self).save()
-        update_posts()
+        update_posts('save post:{0}'.format(self.path))
 
     def delete(self):
         super(Post, self).delete()
-        update_post()
+        update_posts('delete post:{0}'.format(self.path))
 
     def __repr__(self):
         return '<{0}: {1}>'.format(type(self).__name__, self.path)
@@ -56,16 +57,16 @@ class Dir(p.Model):
 
     def save(self):
         super(Dir, self).save()
-        update_site()
+        update_site('save dir:{0}'.format(self.path))
 
     def delete(self):
         super(Dir, self).delete()
-        update_site()
+        update_site('delete dir:{0}'.format(self.path))
 
     def __repr__(self):
         return '<{0}: {1}>'.format(type(self).__name__, self.path)
 
-def update_site():
+def update_site(message=''):
     all_pages_dirs = Page.objects.filter(path__not__contains='/')
     dirs = Dir.objects.all()
     all_pages_dirs.extend(dirs)
@@ -97,9 +98,16 @@ def update_site():
     with open('json/pages.json', 'w') as f:
         simplejson.dump(json_pages, f)
 
+    if USE_GIT:
+        import git
+        repo = git.Repo(SITE)
+        repo.git.add('-A')
+        if repo.git.status('--porcelain') != '':
+            repo.git.add('-A')
+            repo.git.commit(m=message)
 
 
-def update_posts():
+def update_posts(message=''):
     posts = Post.objects.all(order_by='date')
     json_posts = []
     for post in posts:
@@ -112,3 +120,10 @@ def update_posts():
                            'path': '/' + post.path})
     with open('json/posts.json', 'w') as f:
         simplejson.dump(json_posts, f)
+
+    if USE_GIT:
+        import git
+        repo = git.Repo(SITE)
+        if repo.git.status('--porcelain') != '':
+            repo.git.add('-A')
+            repo.git.commit(m=message)
