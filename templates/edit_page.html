@@ -7,9 +7,9 @@
 {% block body %}
 <div class="container theme-showcase" role="main">
 <form action='/{{ post_path }}' method='POST'>
-URL:<br>
-<input type="text" name="name" value="{{ page.name }}"/>
-<input type="hidden" name="old_name" value="{{ page.name }}"/>
+URL Path:<br>
+<input type="text" name="path" value="{{ page.path }}"/>
+<input type="hidden" name="old_path" value="{{ page.path }}"/>
 <input type="hidden" name="markup" value="{{ markup }}"/>
 <br>
 

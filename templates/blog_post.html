@@ -9,7 +9,7 @@
 
       <div class="page-header">
           <span>
-          <h1 class="blog-title">{{ post.title }}</h1>
+          <h1 class="blog-title">{{ post.title }}{% if not post.published %} (unpublished){% endif %}</h1>
             {% if session.logged_in %}
             <span title="{{ post.date }}" class="blog-date">{{ post.date|datefmt }}</span>
             <a href="?edit=md">Edit Markdown</a>

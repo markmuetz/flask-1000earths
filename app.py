@@ -8,7 +8,8 @@ import simplejson
 import markdown
 from flask import Flask, render_template, session, request, jsonify, redirect
 
-from generate_templates import *
+from models import Page, Post, Dir
+import persistence
 
 app = Flask(__name__)
 
@@ -53,7 +54,6 @@ def new_page():
     if request.method == 'GET':
         return render_nav_template('edit_page.html', post_path='new-page', md_text='')
     elif request.method == 'POST':
-        print('POST')
         path = request.form['path']
         md_text = request.form['md_text']
 
@@ -69,28 +69,26 @@ def home():
 def blog():
     with open('json/posts.json', 'r') as f:
         posts = simplejson.load(f)
-    print(posts)
     return render_nav_template('blog.html', page='blog', posts=posts)
 
 
-@app.route('/<path:page_name>', methods=['GET', 'POST'])
-def page(page_name):
-    print(page_name)
-    is_blog_post = os.path.split(page_name)[0] == 'posts'
+@app.route('/<path:path>', methods=['GET', 'POST'])
+def page(path):
+    is_blog_post = os.path.split(path)[0] == 'blog'
 
     if is_blog_post:
-        page = read_post(page_name)
+        page = Post.objects.get(path)
     else:
-        page = read_page(page_name)
+        page = Page.objects.get(path)
 
     if request.method == 'GET':
         markup = request.args.get('edit', False)
         if markup in ['html', 'md']:
             if not _logged_in(session):
                 return render_nav_template('auth_error.html')
-            text = page[markup]
+            text = getattr(page, markup)
             return render_nav_template('edit_page.html', page_type='post',
-                                       page=page, text=text, markup=markup, post_path=page_name)
+                                       page=page, text=text, markup=markup, post_path=path)
 
         if is_blog_post:
             return render_nav_template('blog_post.html', post=page)
@@ -105,36 +103,35 @@ def page(page_name):
             if not _logged_in(session):
                 return render_nav_template('auth_error.html')
 
-            delete_page(page_name)
+            page.delete()
 
             return redirect('/admin')
 
-        new_name = request.form['name']
-        old_name = request.form['old_name']
-        if new_name != old_name:
-            page['new_name'] = new_name
+        new_path = request.form['path']
+        old_path = request.form['old_path']
+        if new_path != old_path:
+            # page_args['path'] = new_name
+            # !
+            pass
 
         if request.form['markup'] == 'md':
-            page['md'] = request.form['text']
+            page.md = request.form['text']
+            page.html_edited = False
 
         elif request.form['markup'] == 'html':
-            page['html'] = request.form['text']
-            page['html_edited'] = is_blog_post
+            page.html = request.form['text']
+            page.html_edited = True
 
-        page['name'] = page_name
-        if is_blog_post:
-            save_post(page)
-        else:
-            save_page(page)
+        page.save()
 
-        return redirect(request.path)
+        return redirect(page.path)
 
 
 @app.template_filter('datefmt')
 def _jinja2_filter_datetime(date):
-    # date = dateutil.parser.parse(date)
-    fmt = '%d/%m/%Y %H:%M:%S'
-    date = dt.datetime.strptime(date, fmt)
+    if isinstance(date, str):
+        fmt = persistence.DATE_FMT
+        date = dt.datetime.strptime(date, fmt)
     native = date.replace(tzinfo=None)
     out_fmt = '%b %d, %Y'
     return native.strftime(out_fmt) 
@@ -147,16 +144,11 @@ def get_pages(page_type='all'):
         pages.insert(0, {'path': '/', 'title': 'Home'})
         if _logged_in(session):
             pages.append({'path': '/admin', 'title': 'Admin'})
-    print(pages)
     return pages
 
 
 def render_nav_template(template, **kwargs):
     pages = get_pages()
-    for page in pages:
-        print(page['path'])
-    print(request.path)
-    
     return render_template(template, path=request.path, nav_pages=pages, **kwargs)
 
 

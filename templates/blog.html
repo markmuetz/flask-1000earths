@@ -9,10 +9,10 @@
 
         <ul class="blog-posts">
             {% for post in posts %}
-            {% if session.logged_in or post.published == "True" %}
+            {% if session.logged_in or post.published %}
             <li class="blog-post">
             <span title="{{ post.date }}" class="blog-date">{{ post.date|datefmt }}</span>
-            <a class="blog-link" href='{{ post.path }}'>{{ post.title }}</a>{% if post.published  == "False"%} (unpublished){% endif %}
+            <a class="blog-link" href='{{ post.path }}'>{{ post.title }}</a>{% if not post.published %} (unpublished){% endif %}
             <p class="blog-subject">Some subject about something interesting to entice people in and get them to click on the blog link above. Should be reasonably short and to the point, maybe one or two sentences.</p >
             </li>
             {% endif %}
