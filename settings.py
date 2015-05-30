@@ -1,3 +1,4 @@
 SITE = 'site'
-USE_GIT = True
 CACHE = 'cache'
+
+USE_GIT = True

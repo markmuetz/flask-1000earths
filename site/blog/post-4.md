@@ -1,1 +1,0 @@
-Mildly interesting blog post.
