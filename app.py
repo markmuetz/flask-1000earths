@@ -164,9 +164,9 @@ def _jinja2_filter_datetime(date):
         fmt = persistence.DATE_FMT
         date = dt.datetime.strptime(date, fmt)
     native = date.replace(tzinfo=None)
-    out_fmt = '%B %-d{0}, %Y'
+    out_fmt = '%b %-d{0}, %Y'
 
-    stndrd = {1: 'st', 2: 'nd', 3: 'th'}
+    stndrd = {1: 'st', 2: 'nd', 3: 'rd'}
     if native.day % 10 in stndrd:
         ending = stndrd[native.day]
     else:
