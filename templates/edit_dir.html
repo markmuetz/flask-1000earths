@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block head %}
+      <title>1000 Earths</title>
+{% endblock %}
+
+{% block body %}
+<div class="container theme-showcase" role="main">
+<form action='/{{ post_path }}' method='POST'>
+URL Path:<br>
+<input type="text" name="path" value="{{ directory.path }}"/>
+<input type="hidden" name="old_path" value="{{ directory.path }}"/>
+<br>
+
+Title:<br>
+<input type="text" name="title" value="{{ directory.title }}"/>
+<br>
+Order:<br>
+<input type="text" name="order" value="{{ directory.order }}"/>
+<br>
+<input type="submit" value="Submit"/>
+
+</form> 
+</div>
+{% endblock %}
+
+
+

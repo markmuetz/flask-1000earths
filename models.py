@@ -38,6 +38,11 @@ class Page(p.Model):
         super(Page, self).delete()
         updater.update_site('delete page:{0}'.format(self.path))
 
+    def change_path(self, new_path):
+        super(Page, self).change_path(new_path)
+        self.path = new_path
+        updater.update_site('change_path page:{0}'.format(self.path))
+
     def __repr__(self):
         return '<{0}: {1}>'.format(type(self).__name__, self.path)
 
@@ -61,6 +66,11 @@ class Post(p.Model):
         super(Post, self).delete()
         updater.update_posts('delete post:{0}'.format(self.path))
 
+    def change_path(self, new_path):
+        super(Post, self).change_path(new_path)
+        self.path = new_path
+        updater.update_posts('change_path post:{0}'.format(self.path))
+
     def __repr__(self):
         return '<{0}: {1}>'.format(type(self).__name__, self.path)
 
@@ -76,6 +86,11 @@ class Dir(p.Model):
     def delete(self):
         super(Dir, self).delete()
         updater.update_site('delete dir:{0}'.format(self.path))
+
+    def change_path(self, new_path):
+        super(Dir, self).change_path(new_path)
+        self.path = new_path
+        updater.update_posts('change_path dir:{0}'.format(self.path))
 
     def __repr__(self):
         return '<{0}: {1}>'.format(type(self).__name__, self.path)

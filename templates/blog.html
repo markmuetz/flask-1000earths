@@ -17,7 +17,26 @@
             </li>
             {% endif %}
             {% endfor %}
+            <li class="blog-post">
+            </li>
         </ul>
+        <div style="font-size: 18px; margin: 0 auto; width: 400px">
+            {% if is_last_page %}
+            <span >&lt;&lt;</span>
+            <span >&lt; Older</span>
+            {% else %}
+            <a href="/blog?page={{ num_pages }}">&lt;&lt;</a>
+            <a href="/blog?page={{ next_page }}">&lt; Older</a>
+            {% endif %}
+            <span >{{ curr_page }}
+            {% if is_first_page %}
+            <span >Newer &gt;</span>
+            <span >&gt;&gt;</span>
+            {% else %}
+            <a href="/blog?page={{ prev_page }}">Newer &gt;</a>
+            <a href="/blog?page=0">&gt;&gt;</a>
+            {% endif %}
+        </div>
       </div>
 {% endblock %}
 

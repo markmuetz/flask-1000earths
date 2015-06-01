@@ -6,18 +6,21 @@ import models
 
 @command
 def update_posts():
-    models.update_posts('manual')
+    updater = models.Updater()
+    updater.update_posts('manual')
 
 
 @command
 def update_site():
-    models.update_site('manual')
+    updater = models.Updater()
+    updater.update_site('manual')
 
 
 @command
 def update_all():
-    models.update_posts('manual')
-    models.update_site('manual')
+    updater = models.Updater()
+    updater.update_site('manual')
+    updater.update_posts('manual')
 
 
 @main_command

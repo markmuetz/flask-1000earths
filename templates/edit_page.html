@@ -13,6 +13,24 @@ URL Path:<br>
 <input type="hidden" name="markup" value="{{ markup }}"/>
 <br>
 
+Title:<br>
+<input type="text" name="title" value="{{ page.title }}"/>
+<br>
+{% if page.type == 'Post' %}
+Date:<br>
+<input type="text" name="date" value="{{ page.date }}"/>
+<br>
+Published:<br>
+<input type="checkbox" name="published" {% if page.published %}checked="checked"{% endif %}></input>
+<br>
+Summary:<br>
+<textarea class="code-text" name="summary" cols="100" rows="3">{{ page.summary }}</textarea>
+<br>
+{% else %}
+Order:<br>
+<input type="text" name="order" value="{{ page.order }}"/>
+<br>
+{% endif %}
 {% if markup == 'md' %}
 Text (Markdown):<br>
 {% else %}

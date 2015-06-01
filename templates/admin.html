@@ -8,9 +8,22 @@
     <div class="container theme-showcase" role="main">
         <ul>
             {% for page in pages %}
-            <li><a href='{{ page.path }}'>{{ page.title }}</a>: <a href='{{ page.path}}?edit=True'>Edit</a>: <a href='{{ page.path}}?delete=True'>Delete</a></li>
+            {% if page.has_subpages %}
+            <li>{{ page.title }}: <a href='{{ page.path}}?edit=True'>Edit</a>: <form action="{{ page.path }}?delete=True" method="POST"><input type="submit" value="Delete"></input></form></li>
+            <ul>
+                {% for subpage in page.subpages %} 
+                <li><a href='{{ subpage.path }}'>{{ subpage.title }}</a>: <a href='{{ subpage.path}}?edit=md'>Edit</a>: <form action="{{ subpage.path }}?delete=True" method="POST"><input type="submit" value="Delete"></input></form></li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <li><a href='{{ page.path }}'>{{ page.title }}</a>: <a href='{{ page.path}}?edit=True'>Edit</a>: <form action="{{ page.path }}?delete=True" method="POST"><input type="submit" value="Delete"></input></form></li>
+            {% endif %}
             {% endfor %}
-            <li><a href='/new-page'>New Page</a></li>
+            <li><a href='/new-page?edit=md'>New Markdown Page</a></li>
+            <li><a href='/new-page?edit=html'>New HTML Page</a></li>
+            <li><a href='/new-post?edit=md'>New Markdown Post</a></li>
+            <li><a href='/new-post?edit=html'>New HTML Post</a></li>
+            <li><a href='/new-dir'>New Dir</a></li>
         </ul>
       </div>
 {% endblock %}

@@ -47,20 +47,6 @@ def admin():
     return render_nav_template('admin.html', pages=pages)
 
 
-@app.route('/new-page', methods=['GET', 'POST'])
-def new_page():
-    if not _logged_in(session):
-        return render_nav_template('auth_error.html')
-
-    if request.method == 'GET':
-        return render_nav_template('edit_page.html', post_path='new-page', md_text='')
-    elif request.method == 'POST':
-        path = request.form['path']
-        md_text = request.form['md_text']
-
-        return redirect(path)
-
-
 @app.route('/')
 def home():
     if not _logged_in(session) and cache.contains('/home'):
@@ -70,12 +56,25 @@ def home():
 
 @app.route('/blog')
 def blog():
-    if not _logged_in(session) and cache.contains('/blog-page'):
-        return cache.get('/blog-page')
+    # if not _logged_in(session) and cache.contains('/blog-page'):
+        # return cache.get('/blog-page')
 
     with open('json/posts.json', 'r') as f:
         posts = simplejson.load(f)
-    return render_nav_template('blog.html', page='blog', posts=posts)
+    posts_per_page = 8
+    num_pages = len(posts) / posts_per_page
+    curr_page = int(request.args.get('page', 0))
+    prev_page = curr_page - 1
+    next_page = curr_page + 1
+    s = slice(curr_page * posts_per_page, next_page * posts_per_page)
+
+    return render_nav_template('blog.html', page='blog', posts=posts[::-1][s],
+                               prev_page=prev_page,
+                               curr_page=curr_page,
+                               next_page=next_page, 
+                               num_pages=num_pages, 
+                               is_last_page=curr_page == num_pages,
+                               is_first_page=curr_page == 0)
 
 
 @app.route('/<path:path>', methods=['GET', 'POST'])
@@ -83,23 +82,41 @@ def page(path):
     if not _logged_in(session) and cache.contains(request.path):
         return cache.get(request.path)
 
-    is_blog_post = os.path.split(path)[0] == 'blog'
+    is_new = path in ['new-page', 'new-post', 'new-dir']
 
-    if is_blog_post:
-        page = Post.objects.get(path)
+    if is_new:
+        page_type = path.split('-')[1].capitalize()
+        if page_type == 'Page':
+            page = Page(path='', title='', order=0)
+        elif page_type == 'Post':
+            page = Post(path='', title='', date=dt.datetime.now(), summary='')
+        elif page_type == 'Dir':
+            page = Dir(path='', title='', order=0, directory='')
     else:
-        page = Page.objects.get(path)
+        page_type = persistence.get_model_type(path)
+        if page_type == 'Page':
+            page = Page.objects.get(path)
+        elif page_type == 'Post':
+            page = Post.objects.get(path)
+        elif page_type == 'Dir':
+            page = Dir.objects.get(path)
+    print('is_new: {0}, page_type: {1}'.format(is_new, page_type))
 
     if request.method == 'GET':
         markup = request.args.get('edit', False)
-        if markup in ['html', 'md']:
+        if page_type in ['Page', 'Post'] and markup in ['html', 'md']:
             if not _logged_in(session):
                 return render_nav_template('auth_error.html')
             text = getattr(page, markup)
-            return render_nav_template('edit_page.html', page_type='post',
-                                       page=page, text=text, markup=markup, post_path=path)
 
-        if is_blog_post:
+            return render_nav_template('edit_page.html', 
+                                       page=page, text=text, markup=markup, post_path=path)
+        elif page_type == 'Dir':
+            return render_nav_template('edit_dir.html', 
+                                       directory=page, post_path=path)
+
+
+        if page_type == 'Post':
             return render_nav_template('blog_post.html', post=page)
         else:
             return render_nav_template('page.html', page=page)
@@ -109,27 +126,32 @@ def page(path):
             return render_nav_template('auth_error.html')
 
         if request.args.get('delete', False):
-            if not _logged_in(session):
-                return render_nav_template('auth_error.html')
-
             page.delete()
-
             return redirect('/admin')
 
         new_path = request.form['path']
         old_path = request.form['old_path']
-        if new_path != old_path:
-            # page_args['path'] = new_name
-            # !
-            pass
+        if is_new:
+            page.path = new_path
+        elif new_path != old_path:
+            page.change_path(new_path)
 
-        if request.form['markup'] == 'md':
-            page.md = request.form['text']
-            page.html_edited = False
+        page.title = request.form['title']
 
-        elif request.form['markup'] == 'html':
-            page.html = request.form['text']
-            page.html_edited = True
+        if page_type in ['Page', 'Dir']:
+            page.order = int(request.form['order'])
+        elif page_type == 'Post':
+            page.date = dt.datetime.now()
+            page.summary = request.form['summary']
+            page.published = request.form['published'] == 'on'
+
+        if page_type in ['Page', 'Post']:
+            if request.form['markup'] == 'md':
+                page.md = request.form['text']
+                page.html_edited = False
+            elif request.form['markup'] == 'html':
+                page.html = request.form['text']
+                page.html_edited = True
 
         page.save()
 
@@ -142,8 +164,15 @@ def _jinja2_filter_datetime(date):
         fmt = persistence.DATE_FMT
         date = dt.datetime.strptime(date, fmt)
     native = date.replace(tzinfo=None)
-    out_fmt = '%b %d, %Y'
-    return native.strftime(out_fmt) 
+    out_fmt = '%B %-d{0}, %Y'
+
+    stndrd = {1: 'st', 2: 'nd', 3: 'th'}
+    if native.day % 10 in stndrd:
+        ending = stndrd[native.day]
+    else:
+        ending = 'th'
+
+    return native.strftime(out_fmt).format(ending)
 
 
 def get_pages(page_type='all'):

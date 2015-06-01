@@ -155,12 +155,8 @@ class Objects(object):
         dir_fields = type(obj).dir_fields.items()
         for dir_field_name, dir_field in dir_fields:
             dirname = os.path.join(SITE, '{0}'.format(obj.path))
-            os.makedirs(dirname)
-
-        # if page_type == 'post':
-            # posts()
-        # elif page_type == 'page':
-            # site()
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
 
     def delete(self, obj):
         path = obj.path
@@ -176,6 +172,24 @@ class Objects(object):
         for content_field_name, content_field in content_fields:
             content_filename = os.path.join(SITE, '{0}.{1}'.format(obj.path, content_field.ctype))
             os.remove(content_filename)
+
+    def change_path(self, obj, new_path):
+        path = obj.path
+
+        dir_fields = type(obj).dir_fields.items()
+        for dir_field_name, dir_field in dir_fields:
+            os.rename(os.path.join(SITE, '{0}'.format(path)), 
+                      os.path.join(SITE, '{0}'.format(new_path))) 
+
+        cfg_filename = os.path.join(SITE, '{0}.cfg'.format(path))
+        new_cfg_filename = os.path.join(SITE, '{0}.cfg'.format(new_path))
+        os.rename(cfg_filename, new_cfg_filename) 
+
+        content_fields = type(obj).content_fields.items()
+        for content_field_name, content_field in content_fields:
+            content_filename = os.path.join(SITE, '{0}.{1}'.format(obj.path, content_field.ctype))
+            new_content_filename = os.path.join(SITE, '{0}.{1}'.format(new_path, content_field.ctype))
+            os.rename(content_filename, new_content_filename)
 
 
 class Field(object):
@@ -219,6 +233,13 @@ class MetaModel(type):
         obj_cls = super(MetaModel, cls).__new__(cls, clsname, bases, dct)
         dct['objects'].obj_cls = obj_cls
         return obj_cls
+
+
+def get_model_type(path):
+    cfg_filename = os.path.join(SITE, '{0}.cfg'.format(path))
+    cp = ConfigParser.ConfigParser()
+    cp.read(cfg_filename)
+    return cp.sections()[0]
 
 
 class Model(object):
@@ -267,8 +288,15 @@ class Model(object):
         if len(kwargs) != 0:
             raise Exception('Leftover kwargs: {0}'.format(kwargs))
 
+    @property
+    def type(self):
+        return type(self).__name__
+
     def save(self):
         type(self).objects.save(self)
 
     def delete(self):
         type(self).objects.delete(self)
+
+    def change_path(self, new_path):
+        type(self).objects.change_path(self, new_path)
