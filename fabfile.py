@@ -17,7 +17,8 @@ def initial_setup():
 
 @task 
 def setup_supervisor():
-    sudo('ln -s Projects/flask-1000earths/supervisor_1000earths.ini /etc/supervisor/conf.d/')
+    sudo('ln -s /home/markmuetz/Projects/flask-1000earths/supervisor_1000earths.ini '
+         '/etc/supervisor/conf.d/supervisor_1000earths.conf')
     sudo('service supervisor restart')
 
 @task 
@@ -26,6 +27,7 @@ def setup_nginx():
     sudo('service nginx restart')
 
 
+@task 
 def deploy():
     with cd('Projects/flask-1000earths'):
         run('git fetch')
