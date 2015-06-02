@@ -41,6 +41,8 @@ def deploy():
         run('git merge origin/master')
         with prefix('source .env/bin/activate'):
             run('pip install -r requirements_deployment.txt')
+    sudo('service supervisor restart')
+    sudo('service nginx restart')
     sudo('supervisorctl restart 1000earths')
     update_site()
 
