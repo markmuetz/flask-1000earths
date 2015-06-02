@@ -7,6 +7,7 @@ def initial_setup():
     with cd('Projects'):
         run('git clone https://github.com/markmuetz/flask-1000earths.git')
         with cd('flask-1000earths'):
+            run('git clone https://github.com/markmuetz/1000earths-site.git site')
             run('virtualenv .env')
             with prefix('source .env/bin/activate'):
                 run('pip install -U pip')
@@ -23,7 +24,7 @@ def setup_supervisor():
 
 @task 
 def setup_nginx():
-    sudo('ln -s Projects/flask-1000earths/nginx_1000earths.conf /etc/nginx/sites-enabled/')
+    sudo('ln -s /home/markmuetz/Projects/flask-1000earths/nginx_1000earths.conf /etc/nginx/sites-enabled/')
     sudo('service nginx restart')
 
 
@@ -32,6 +33,11 @@ def deploy():
     with cd('Projects/flask-1000earths'):
         run('git fetch')
         run('git merge origin/master')
+        run('git clone https://github.com/markmuetz/1000earths-site.git site')
+        with cd('site'):
+            run('git fetch')
+            run('git merge origin/master')
+
         with prefix('source .env/bin/activate'):
             run('pip install -r requirements_deployment.txt')
     sudo('supervisorctl restart 1000earths')
