@@ -1,5 +1,6 @@
 from __future__ import print_function
 from fabric.api import env, run, cd, settings, sudo, put, execute, task, prefix, get
+from fabric.contrib.files import exists
 
 
 @task
@@ -20,13 +21,16 @@ def initial_setup():
 
 @task 
 def setup_supervisor():
-    sudo('ln -s /home/markmuetz/Projects/flask-1000earths/supervisor_1000earths.ini '
-         '/etc/supervisor/conf.d/supervisor_1000earths.conf')
+    if not exists('/etc/supervisor/conf.d/supervisor_1000earths.conf'):
+        sudo('ln -s /home/markmuetz/Projects/flask-1000earths/supervisor_1000earths.ini '
+             '/etc/supervisor/conf.d/supervisor_1000earths.conf')
     sudo('service supervisor restart')
+
 
 @task 
 def setup_nginx():
-    sudo('ln -s /home/markmuetz/Projects/flask-1000earths/nginx_1000earths.conf /etc/nginx/sites-enabled/')
+    if not exists('/etc/nginx/sites-enabled/nginx_1000earths.conf'):
+        sudo('ln -s /home/markmuetz/Projects/flask-1000earths/nginx_1000earths.conf /etc/nginx/sites-enabled/')
     sudo('service nginx restart')
 
 
