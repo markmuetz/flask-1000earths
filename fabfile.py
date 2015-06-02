@@ -12,6 +12,8 @@ def initial_setup():
             with prefix('source .env/bin/activate'):
                 run('pip install -U pip')
                 run('pip install -r requirements_deployment.txt')
+            run('mkdir json')
+            run('mkdir cache')
     setup_supervisor()
     setup_nginx()
 
@@ -33,7 +35,6 @@ def deploy():
     with cd('Projects/flask-1000earths'):
         run('git fetch')
         run('git merge origin/master')
-        run('git clone https://github.com/markmuetz/1000earths-site.git site')
         with cd('site'):
             run('git fetch')
             run('git merge origin/master')
@@ -42,4 +43,13 @@ def deploy():
             run('pip install -r requirements_deployment.txt')
     sudo('supervisorctl restart 1000earths')
 
+@task 
+def update_site():
+    with cd('Projects/flask-1000earths/site'):
+        run('git fetch')
+        run('git merge origin/master')
+
+    with cd('Projects/flask-1000earths'):
+        with prefix('source .env/bin/activate'):
+            run('./manage.py update_all')
 
