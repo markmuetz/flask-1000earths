@@ -13,6 +13,8 @@ import persistence
 from secret_settings import PASSWORD, SECRET_KEY
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = SECRET_KEY
+
 
 cache = persistence.Cache()
 
@@ -32,6 +34,7 @@ def login():
         return redirect('/')
     elif request.method == 'GET':
         return render_nav_template('login.html', page='login')
+
 
 @app.route('/logout')
 def logout():
@@ -205,7 +208,5 @@ def page_not_found(error):
 
 
 if __name__ == '__main__':
-    app.config['SECRET_KEY'] = SECRET_KEY
-
     app.debug = True
     app.run(host='0.0.0.0')

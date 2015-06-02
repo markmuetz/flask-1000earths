@@ -1,4 +1,4 @@
 SITE = 'site'
 CACHE = 'cache'
 
-USE_GIT = True
+USE_GIT = False
