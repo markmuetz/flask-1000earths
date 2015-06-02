@@ -35,13 +35,10 @@ def deploy():
     with cd('Projects/flask-1000earths'):
         run('git fetch')
         run('git merge origin/master')
-        with cd('site'):
-            run('git fetch')
-            run('git merge origin/master')
-
         with prefix('source .env/bin/activate'):
             run('pip install -r requirements_deployment.txt')
     sudo('supervisorctl restart 1000earths')
+    update_site()
 
 @task 
 def update_site():
@@ -51,5 +48,5 @@ def update_site():
 
     with cd('Projects/flask-1000earths'):
         with prefix('source .env/bin/activate'):
-            run('./manage.py update_all')
+            sudo('./manage.py update_all')
 
