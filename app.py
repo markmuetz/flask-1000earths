@@ -146,7 +146,10 @@ def page(path):
         elif page_type == 'Post':
             page.date = dt.datetime.now()
             page.summary = request.form['summary']
-            page.published = request.form['published'] == 'on'
+            if 'published' in request.form:
+                page.published = request.form['published'] == 'on'
+            else:
+                page.published = False
 
         if page_type in ['Page', 'Post']:
             if request.form['markup'] == 'md':
