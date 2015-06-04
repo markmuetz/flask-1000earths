@@ -1,7 +1,10 @@
 from __future__ import print_function
 from fabric.api import env, run, cd, settings, sudo, put, execute, task, prefix, get
 from fabric.contrib.files import exists
+import secret_settings
 
+if hasattr(secret_settings, 'SERVER_PASSWORD'):
+    env.password = secret_settings.SERVER_PASSWORD
 
 @task
 def initial_setup():
