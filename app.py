@@ -3,6 +3,9 @@ import shutil
 from glob import glob
 import ConfigParser
 import datetime as dt
+import logging
+from logging.handlers import RotatingFileHandler
+from logging import Formatter
 
 import simplejson
 import markdown
@@ -15,6 +18,15 @@ from secret_settings import PASSWORD, SECRET_KEY
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
 
+handler = RotatingFileHandler('logs/1000earths.log',
+                              maxBytes=10000, 
+                              backupCount=3)
+handler.setLevel(logging.INFO)
+handler.setFormatter(Formatter(
+    '%(asctime)s %(levelname)s: %(message)s '
+    '[in %(pathname)s:%(lineno)d]'
+))
+app.logger.addHandler(handler)
 
 cache = persistence.Cache()
 
@@ -83,6 +95,7 @@ def blog():
 @app.route('/<path:path>', methods=['GET', 'POST'])
 def page(path):
     if not _logged_in(session) and cache.contains(request.path):
+        app.logger.debug('returning cached {}'.format(request.path))
         return cache.get(request.path)
 
     is_new = path in ['new-page', 'new-post', 'new-dir']
@@ -103,7 +116,7 @@ def page(path):
             page = Post.objects.get(path)
         elif page_type == 'Dir':
             page = Dir.objects.get(path)
-    print('is_new: {0}, page_type: {1}'.format(is_new, page_type))
+    app.logger.info('is_new: {0}, page_type: {1}'.format(is_new, page_type))
 
     if request.method == 'GET':
         markup = request.args.get('edit', False)
@@ -159,7 +172,11 @@ def page(path):
                 page.html = request.form['text']
                 page.html_edited = True
 
-        page.save()
+        try:
+            page.save()
+        except Exception as e:
+            app.logger.error('Problem saving page {}: {}'.format(page, e))
+            raise
 
         return redirect(page.path)
 
